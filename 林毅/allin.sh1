@@ -1,0 +1,100 @@
+#!/bin/bash
+pwd
+
+#---------------------------------------------------------------
+#-----执行脚本前需要将jdk和maven的settings.xml文件上传
+#---------------------------------------------------------------
+
+echo '-----------------------开放端口----------------------------------'
+#启动防火墙
+systemctl start firewalld.service
+#jenkins
+firewall-cmd --permanent --add-port=8080/tcp
+#mysql
+firewall-cmd --permanent --add-port=3306/tcp
+#前端
+firewall-cmd --permanent --add-port=3000/tcp
+#后端
+firewall-cmd --permanent --add-port=9000/tcp
+firewall-cmd --permanent --add-port=9001/tcp
+firewall-cmd --permanent --add-port=9002/tcp
+firewall-cmd --reload
+
+echo '-----------------------开始安装docker-------------------------'
+#yum 包更新到最新
+#sudo yum -y update
+#安装需要的软件包， yum-util提供yum-config-manager功能，另外两个是devicemapper驱动依赖的
+sudo yum install -y yum-utils device-mapper-persistent-data lvm2
+#设置yum源为阿里云
+sudo yum-config-manager --add-repo http://mirrors.aliyun.com/docker-ce/linux/centos/docker-ce.repo
+#安装Docker
+sudo yum install -y docker-ce
+#创建文件夹
+mkdir /etc/docker/
+#创建配置文件
+touch /etc/docker/daemon.json
+#输入内容
+echo '{"registry-mirrors":["https://docker.mirrors.ustc.edu.cn"]}'  >> /etc/docker/daemon.json
+#开机启动docker
+systemctl enable docker 
+#重启docker
+systemctl restart docker 
+
+
+
+echo '-----------------------开始安装开发工具-------------------------'
+#创建常用文件夹并授权
+mkdir /usr/local/maven
+mkdir /var/repository
+mkdir /usr/local/java
+mkdir /usr/local/node
+mkdir /var/jenkins_home
+mkdir /var/lib/mysql
+mkdir /etc/mysql
+chmod -R 777 /usr/local/maven
+chmod -R 777 /var/repository
+chmod -R 777 /usr/local/java
+chmod -R 777 /usr/local/node
+chmod -R 777 /var/jenkins_home
+chmod -R 777 /var/lib/mysql
+chmod -R 777 /etc/mysql
+echo '文件夹创建完毕...'
+
+#安装java
+tar -zxvf jdk-8u281-linux-x64.tar.gz -C /usr/local/java/
+echo '# java environment' >> /etc/profile
+echo 'export JAVA_HOME=/usr/local/java/jdk1.8.0_281' >> /etc/profile
+echo 'export JRE_HOME=$JAVA_HOME/jre' >> /etc/profile
+echo 'export CLASSPATH=$JAVA_HOME/lib:$JRE_HOME/lib:$CLASSPATH' >> /etc/profile
+echo 'export PATH=$JAVA_HOME/bin:$JRE_HOME/bin:$PATH' >> /etc/profile
+
+#安装maven
+wget http://mirrors.hust.edu.cn/apache/maven/maven-3/3.6.3/binaries/apache-maven-3.6.3-bin.tar.gz
+tar -zxvf  apache-maven-3.6.3-bin.tar.gz -C /usr/local/maven/
+\cp ./settings.xml /usr/local/maven/apache-maven-3.6.3/conf/settings.xml
+echo '#maven environment' >> /etc/profile
+echo 'export MAVEN_HOME=/usr/local/maven/apache-maven-3.6.3' >> /etc/profile
+echo 'export PATH=$MAVEN_HOME/bin:$PATH' >> /etc/profile
+
+#安装node
+wget https://npm.taobao.org/mirrors/node/v12.16.1/node-v12.16.1-linux-x64.tar.gz
+tar -xvf node-v12.16.1-linux-x64.tar.gz
+#将node放在指定目录方便管理
+sudo mv ./node-v12.16.1-linux-x64 /usr/local/node
+#添加环境变量
+echo '#node environment' >> /etc/profile
+echo 'export NODE_HOME=/usr/local/node/node-v12.16.1-linux-x64' >> /etc/profile
+echo 'export PATH=$NODE_HOME/bin:$PATH' >> /etc/profile
+
+#刷新环境变量
+source /etc/profile
+
+#开始运行容器
+#mysql
+docker run -p 3306:3306 --name mysql --privileged=true --restart=unless-stopped  -v /etc/mysql:/etc/mysql -v /var/lib/mysql:/var/lib/mysql -v /etc/localtime:/etc/localtime -e MYSQL_ROOT_PASSWORD=root -d mysql:5.7 
+
+#redis
+docker run -d --name redis -p 6379:6379 redis --requirepass 123456
+
+#jenkins
+docker run -d --privileged=true --restart=unless-stopped -u root -p 8080:8080 -p 50000:50000 -v /var/jenkins_home:/var/jenkins_home -v /var/repository:/var/repository  -v /var/run/docker.sock:/var/run/docker.sock -v  /usr/local/maven:/usr/local/maven -v  /usr/local/java:/usr/local/java -v  /usr/local/node:/usr/local/node    -v /etc/localtime:/etc/localtime --name jenkins jenkinsci/blueocean:latest
