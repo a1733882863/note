@@ -224,3 +224,17 @@ git remote rm <shortname>
 
 ![1618370910983](git的基本命令.assets/1618370910983.png)
 
+
+
+```java
+@ApiModelProperty(value = "打印机密码")protected String printerp;@ApiModelProperty(value = "打印机账号")protected String printeru;@ApiModelProperty(value = "打印机密码")protected String printerp2;@ApiModelProperty(value = "打印机账号")protected String printeru2;@ApiModelProperty(value = "打印机密码")protected String printerp3;@ApiModelProperty(value = "打印机账号")protected String printeru3;@ApiModelProperty(value = "打印数量")protected Integer printNumber;@ApiModelProperty(value = "打印数量")protected Integer printNumber2;@ApiModelProperty(value = "打印数量")protected Integer printNumber3;
+```
+
+
+
+
+
+```
+
+```
+

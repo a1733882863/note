@@ -427,3 +427,156 @@ help
 
   
 
+##### 4.3.3 创建节点
+
+- 一个ACL对象就是一个Id和permission对
+  - 表示哪个/哪些范围的id(who)在通过了怎样的鉴权(how)之后,就允许进行那些操作(what): WHo How What;
+  - permission(What)就是一个int表示的位码,每一位代表一个对应操作的允许状态
+  - 类似linux的文件权限,不同的是共有5中操作:CREATE,READ,WRITE,DELETE,ADMIN(对应更改ACL的权限)
+    - OPEN_ACL_UNSAGE: 创建开放节点,允许任意操作(用的最少,其余的权限用的很少)
+    - READ_ACL_UNSAVE: 创建只读节点
+    - CREATOR_ALL_ACL: 创建者才有全部权限
+
+```java
+@Before
+    public void init() throws IOException {
+        //省略...
+    }
+
+    @Test
+    public void createNode() {
+        String nodeCreate=zkClient.create("/lg1","laox".getBytes(),ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        //参数1:要创建的节点路径
+        //参数2:节点数据
+        //参数3:节点权限
+        //参数4:节点的类型
+        System.out.println("已创建节点  : "+ nodeCreate);
+    }
+```
+
+##### 4.3.4查询节点的值
+
+```java
+//获取节点上的值
+    @Test
+    public void getNode() throws KeeperException, InterruptedException {
+        byte[] getNode = zkClient.getData("/lg1",false,new Stat());
+        String str = new String(getNode);
+        System.out.println("lg1的节点数据是: " + str);
+    }
+```
+
+
+
+##### 4.3.5 修改节点的值
+
+```java
+//修改节点上的数据
+    @Test
+    public void updataData() throws KeeperException, InterruptedException {
+        zkClient.setData("/lg1","新值".getBytes(),0);
+    }
+```
+
+##### 4.3.6删除节点的值
+
+```java
+//删除节点
+    @Test
+    public void deleteData() throws KeeperException, InterruptedException {
+        zkClient.delete("/lg",1);
+    }
+```
+
+##### 4.3.7获取子节点
+
+```java
+//获取子节点
+    @Test
+    public void getChild() throws KeeperException, InterruptedException {
+        List<String> children = zkClient.getChildren("/china", false);
+        for (String child : children) {
+            System.out.println(child);
+        }
+    }
+```
+
+##### 4.3.8监听子节点的变化
+
+```java
+//监听根节点下面的变化
+//在@befor里已经声明了监听器
+    @Test
+    public void watchNode() throws KeeperException, InterruptedException, IOException {
+        List<String> children = zkClient.getChildren("/", true);
+        for (String child : children) {
+            System.out.println(child);
+            System.in.read();
+        }
+    }
+```
+
+##### 4.3.9 美团商家用户示例
+
+###### 创建链接
+
+![1618534590596](Zookeeper和dubbo.assets/1618534590596.png)
+
+###### 商家向美团注册
+
+![1618534825384](Zookeeper和dubbo.assets/1618534825384.png)
+
+
+
+
+
+###### 商家操作流程
+
+![1618534922822](Zookeeper和dubbo.assets/1618534922822.png)
+
+
+
+###### 用户操作流程
+
+![1618535070269](Zookeeper和dubbo.assets/1618535070269.png)
+
+
+
+###### 目前正在营业的商家
+
+![1618535716350](Zookeeper和dubbo.assets/1618535716350.png)
+
+###### 用户正在浏览商家
+
+![1618537355533](Zookeeper和dubbo.assets/1618537355533.png)
+
+#### 4.5 案例-分布式锁-商品秒杀
+
+![1618538356265](Zookeeper和dubbo.assets/1618538356265.png)
+
+![1618538481788](Zookeeper和dubbo.assets/1618538481788.png)
+
+#####  实现步骤
+
+###### 1.初始化数据库
+
+创建数据库zkproduct,使用默认字段utf8
+
+```mysql
+-- 商品类
+create table product (
+	id int primary key auto_increment comment '商品编号',
+	product_name varchar(20) not null comment '商品名称',
+	stock int not null comment '库存',
+  version int not null comment '版本'
+)
+
+
+
+create table `order` (
+	id varchar(100) primary key , 
+	pid int not null,            
+	userid int not null
+)
+```
+
