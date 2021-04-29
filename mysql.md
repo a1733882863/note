@@ -10,7 +10,7 @@
 
 ##### 2.下载对应的yum包
 
-打开https://dev.mysql.com/downloads/repo/yum/
+打开https://dev.mysql.com/downloads/repo/yum/   [MySQL Yum存储库](https://dev.mysql.com/downloads/repo/yum/) 
 
 查看自己centos对应的版本 
 
@@ -18,10 +18,11 @@
 cat /etc/redhat-release 
 ```
 
-下载自己对应版本的安装包
+下载自己对应版本的安装包和安装mysql源
 
 ```
 wget https://dev.mysql.com/get/mysql80-community-release-el7-3.noarch.rpm
+rpm -Uvh mysql80-community-release-el7-3.noarch.rpm
 ```
 
 如果显示wget未找到命令，则需要先安装wget：
@@ -222,6 +223,11 @@ ALTER USER 'root'@'localhost' IDENTIFIED BY '!@#QWEasd123'
 ##### 2.远程连接数据库的问题解决
 
 https://www.cnblogs.com/xujingyang/p/9479811.html
+
+```
+设置成所有用户能访问
+update user set host = '%' where user = 'root';
+```
 
 
 

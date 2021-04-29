@@ -458,8 +458,8 @@ save
 ```
 sentinel monitor (被监控主机名) ip              端口   票数
 sentinel monitor redis148     192.168.199.148 6379  1
-sentinel monitor redis148     192.168.199.148 6379  1
-sentinel monitor redis148     192.168.199.129 6379  1
+sentinel monitor redis248    192.168.199.248 6379  1
+sentinel monitor redis129    192.168.199.129 6379  1
 ```
 
 启动服务器顺序:主redis-->从redis-->sentinel1/2/3
